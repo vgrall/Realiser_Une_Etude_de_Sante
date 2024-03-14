@@ -65,10 +65,3 @@ resultats_2017.rename(columns={'Valeur_x': 'Population', 'Valeur_y': 'Sous_nutri
 
 # Afficher le DataFrame résultant
 print(resultats_2017)
-
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 7a3849ab3370f396efa32897aa7c73e573d96985
