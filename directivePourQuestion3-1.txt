@@ -1,0 +1,34 @@
+Pour la question 3.1
+après avoir splité le tableau sous-nutrition pour avoir une ligne par année
+faire un autre tableau qui va accueillir
+1 année par ligne et en face la somme des 3 lignes de cette année / 9
+Ex pour Afghanistan
+nous avons dans la source
+Année 2015 à 2017 = 9,7 millions
+Année 2016 à 2018 =  10,5 millions
+Année 2017 à 2019 = 11,1 millions
+
+On split et on obtient
+2015 = 9,7 millions
+2016 = 9,7 millions
+2017 = 9,7 millions
+2016 =  10,5 millions
+2017 =  10,5 millions
+2018 =  10,5 millions
+2017 = 11,1 millions
+2018 = 11,1 millions
+2019 = 11,1 millions
+
+On doit faire une moyenne des valeurs pour pouvoir la faire correspondre à une année unique
+2015 = (9,7 + 10,5 + 11,1)/9 soit 3,48 millions
+2016 = (9,7 + 10,5 + 11,1)/9 soit 3,48 millions
+2017 = (9,7 + 10,5 + 11,1)/9 soit 3,48 millions
+2018 = (9,7 + 10,5 + 11,1)/9 soit 3,48 millions
+2019 = (9,7 + 10,5 + 11,1)/9 soit 3,48 millions
+
+Nous n'aurons pas les chiffres juste par année mais une moyenne acceptable
+qui peut être rapporté à une population et mise sous forme de ratio
+
+Population 2017 En Afghanistan = 36 296 113 personnes
+Sous nutrition en 2017 = 3 480 000 personnes en moyenne
+Proportion de sous-nutris en 2017 = 9,58%
