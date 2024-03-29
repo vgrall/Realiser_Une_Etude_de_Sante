@@ -240,10 +240,39 @@ def format_population(valeur):
 dispoAlimentaire['Population_moyenne'] = dispoAlimentaire['Population_moyenne'].apply(format_population)
 
 # Afficher les premières lignes du DataFrame
-print(dispoAlimentaire.head())
+#print(dispoAlimentaire.head())
 
-# Calculer la disponibilité alimentaire par pays
-#dispoAlimentaire['Disponibilité alimentaire (kg/an)'] = dispoAlimentaire['Disponibilité alimentaire en quantité (kg/personne/an)'] * dispoAlimentaire['Population_moyenne']
+#Convertir le type de la colonne 'Population_moyenne' en entier float64
+
+dispoAlimentaire['Population_moyenne'] = dispoAlimentaire['Population_moyenne'].str.replace(' ', '').astype('float64')
+
+
+# Création de la colonne dispo_kcal à partir de la colonne Disponibilité alimentaire (Kcal/personne/jour) de la table dispoAlimentaire
+# puis calcul des kcal disponibles mondialement
+dispoAlimentaire['dispo_kcal'] = dispoAlimentaire['Disponibilité alimentaire (Kcal/personne/jour)'] * dispoAlimentaire['Population_moyenne'] * 365
+
+# Définition de la fonction de formatage pour dispo_kcal
+def format_dispo_kcal(valeur):
+    return "{:,.0f}".format(valeur).replace(",", " ")
+
+# Appliquer la fonction de formatage à la colonne 'dispo_kcal'
+dispoAlimentaire['dispo_kcal'] = dispoAlimentaire['dispo_kcal'].apply(format_dispo_kcal)
+
+# Afficher les premières lignes du DataFrame
+#print(dispoAlimentaire.head())
+
+#convertir le type de la colonne 'dispo_kcal' en entier float64
+dispoAlimentaire['dispo_kcal'] = dispoAlimentaire['dispo_kcal'].str.replace(' ', '').astype('float64')
+
+
+#Calcul du nombre d'humains pouvant être nourris
+# Calculer le nombre d'humains pouvant être nourris avec les kcal disponibles dans le monde
+kcal_disponibles = dispoAlimentaire['dispo_kcal'].sum()
+nb_humains_nourris = kcal_disponibles / 2500 / 365
+
+# Afficher le nombre d'humains pouvant être nourris
+print("Le nombre d'humains pouvant être nourris avec les kcal disponibles dans le monde est de : {:,.0f} personnes".format(nb_humains_nourris))
+
 
 
 
