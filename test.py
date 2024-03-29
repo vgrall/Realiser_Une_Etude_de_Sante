@@ -70,9 +70,18 @@ population.drop(columns=['Valeur'], inplace=True)
 dispoAlimentaire = dispoAlimentaire.fillna(0)
 # print(dispoAlimentaire.head())
 
+
 #multiplication de toutes les lignes contenant des milliers de tonnes en Kg
-NewDispoAlimentaire = dispoAlimentaire.iloc[:, 3:] * 1000000
-NewDispoAlimentaire_entier = NewDispoAlimentaire.astype(int)
+colonnes_a_convertir = ['Autres Utilisations', 'Disponibilité intérieure', 'Exportations - Quantité',
+                        'Importations - Quantité', 'Nourriture', 'Pertes', 'Production', 'Semences', 
+                        'Traitement', 'Variation de stock']
+
+for colonne in colonnes_a_convertir:
+    dispoAlimentaire[colonne] *= 1000  # Convertir de milliers de tonnes à kg
+
+#Affichage les 5 premières lignes de la table
+# print(dispoAlimentaire.head())
+
 
 # Afficher les premières lignes du DataFrame
 # print(NewDispoAlimentaire_entier.head())
@@ -146,10 +155,6 @@ sousNutrition['Année'] = sousNutrition['Année'].str.split('-').apply(lambda x:
 sousNutrition = sousNutrition.explode('Année')
 sousNutrition['Année'] = sousNutrition['Année'].astype(int)
 
-# Faire une moyenne des valeurs de sous_nutrition pour chaque pays et pour chaque année en divisant par 9 les valeurs de sous_nutrition
-sousNutrition['sous_nutrition'] = sousNutrition['sous_nutrition'] / 9
-
-
 # Réinitialiser les index /garantit que chaque ligne a un index unique et que les index sont contigus, ce qui facilite l'accès et la manipulation des données.
 sousNutrition = sousNutrition.reset_index(drop=True)
 
@@ -166,9 +171,14 @@ jointure = pd.merge(population, sousNutrition, on=['Zone', 'Année'])
 # Filtrer les résultats pour ne conserver que les lignes avec l'année 2017
 resultats_2017 = jointure[jointure['Année'] == 2017]
 
-# Regrouper les données en fonction de la colonne Zone puis retenir la première valeur de la colonne Population et la somme des valeurs de la colonne sous_nutrition
+#Regrouper les données en fonction de la colonne Zone 
+#puis retenir la première valeur de la colonne Population et la dernière valeurs de la colonne sous_nutrition (celle la plus récente)
 
-resultats_2017 = resultats_2017.groupby('Zone').agg({'Population': 'first', 'sous_nutrition': 'sum'}).reset_index()
+# Trouver la valeur de personnes en sous-nutrition pour chaque pays en 2017
+resultats_2017 = resultats_2017.groupby('Zone').agg({'Population': 'first', 'sous_nutrition': 'last'}).reset_index()
+
+
+# resultats_2017 = resultats_2017.groupby('Zone').agg({'Population': 'first', 'sous_nutrition': 'sum'}).reset_index()
 
 # Convertir la colonne 'sous_nutrition' en type entier
 resultats_2017['sous_nutrition'] = resultats_2017['sous_nutrition'].astype(int)
@@ -179,7 +189,7 @@ resultats_2017['proportion_sous_nutrition'] = resultats_2017['sous_nutrition'] /
 # Arrondir les valeurs à deux chiffres après la virgule et rajouter le signe % à la fin
 resultats_2017['proportion_sous_nutrition'] = resultats_2017['proportion_sous_nutrition'].round(2).astype(str) + '%'
 
-# print(resultats_2017)
+#print(resultats_2017)
 # print to excel
 
 
@@ -200,6 +210,40 @@ formatted_total_population = "{:,.0f}".format(total_population)
 pourcentage_sous_nutrition = total_sous_nutrition / total_population * 100
 pourcentage_sous_nutrition_arrondi = round(pourcentage_sous_nutrition, 2)
 #print("Le pourcentage de personnes en état de sous-nutrition dans le monde en 2017 est de : {}%".format(pourcentage_sous_nutrition_arrondi))
+
+
+#Combien mange en moyenne un être humain ?  
+# Calculer la disponibilité alimentaire moyenne par personne par produit
+disponibilite_moyenne_par_personne = dispoAlimentaire[['Produit', 'Disponibilité alimentaire en quantité (kg/personne/an)']].groupby('Produit').mean()
+
+# Afficher la disponibilité alimentaire moyenne par personne par produit
+# print(disponibilite_moyenne_par_personne)
+# print(disponibilite_moyenne_par_personne.loc['Blé'])
+
+#Faire une jointure entre les tables disponibilité alimentaire et population sur la colonne Zone
+# la table disponibilité alimentaire ne comporte pas de colonne année, il faut donc faire une moyenne de population par pays
+# pour pouvoir faire la jointure
+# Calculer la population moyenne par pays
+population_moyenne = population.groupby('Zone')['Population'].mean().reset_index()
+
+# Renommer la colonne 'Population' en 'Population_moyenne'
+population_moyenne.rename(columns={'Population': 'Population_moyenne'}, inplace=True)
+
+# Faire une jointure entre les tables disponibilité alimentaire et population sur la colonne Zone
+dispoAlimentaire = pd.merge(dispoAlimentaire, population_moyenne, on='Zone')
+
+# Définition de la fonction de formatage
+def format_population(valeur):
+    return "{:,.0f}".format(valeur).replace(",", " ")
+
+# Appliquer la fonction de formatage à la colonne 'Population_moyenne'
+dispoAlimentaire['Population_moyenne'] = dispoAlimentaire['Population_moyenne'].apply(format_population)
+
+# Afficher les premières lignes du DataFrame
+print(dispoAlimentaire.head())
+
+# Calculer la disponibilité alimentaire par pays
+#dispoAlimentaire['Disponibilité alimentaire (kg/an)'] = dispoAlimentaire['Disponibilité alimentaire en quantité (kg/personne/an)'] * dispoAlimentaire['Population_moyenne']
 
 
 
