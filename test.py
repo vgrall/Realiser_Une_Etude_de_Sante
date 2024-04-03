@@ -211,6 +211,9 @@ pourcentage_sous_nutrition = total_sous_nutrition / total_population * 100
 pourcentage_sous_nutrition_arrondi = round(pourcentage_sous_nutrition, 2)
 #print("Le pourcentage de personnes en état de sous-nutrition dans le monde en 2017 est de : {}%".format(pourcentage_sous_nutrition_arrondi))
 
+#************************************************************
+#3.2 - Nombre théorique de personne qui pourrait être nourries
+#************************************************************
 
 #Combien mange en moyenne un être humain ?  
 # Calculer la disponibilité alimentaire moyenne par personne par produit
@@ -271,8 +274,194 @@ kcal_disponibles = dispoAlimentaire['dispo_kcal'].sum()
 nb_humains_nourris = kcal_disponibles / 2500 / 365
 
 # Afficher le nombre d'humains pouvant être nourris
-print("Le nombre d'humains pouvant être nourris avec les kcal disponibles dans le monde est de : {:,.0f} personnes".format(nb_humains_nourris))
+#print("Le nombre d'humains pouvant être nourris avec les kcal disponibles dans le monde est de : {:,.0f} personnes".format(nb_humains_nourris))
 
+#************************************************************
+#3.3 - Nombre théorique de personnes qui pourrait être nourries avec les produits végétaux
+#************************************************************
+
+#Transfert des données avec les végétaux dans un nouveau DataFrame
+dispoAlimentaire_vegetaux = dispoAlimentaire[dispoAlimentaire['Origine'] == 'vegetale']
+
+#combien de calories au total sont disponibles dans l'alimentation végétale sans rapporter à la population
+kcal_disponibles_vegetaux = dispoAlimentaire_vegetaux['dispo_kcal'].sum()
+#print("Le nombre total de calories disponibles dans l'alimentation végétale est de : {:,.0f} kcal".format(kcal_disponibles_vegetaux))
+
+#Calcul du nombre d'humains pouvant être nourris avec les végétaux
+nb_humains_nourris_vegetaux = kcal_disponibles_vegetaux / 2500 / 365
+# print("Le nombre d'humains pouvant être nourris avec les végétaux disponibles dans le monde est de : {:,.0f} personnes".format(nb_humains_nourris_vegetaux))
+
+#************************************************************
+#3.4 - Utilisation de la disponibilité intérieure
+#************************************************************
+
+# Calcul de la disponibilité intérieure mondiale pour toutes les origines
+dispo_int = dispoAlimentaire['Disponibilité intérieure'].sum()
+#print("La disponibilité intérieure mondiale pour toutes les origines est de : {:,.0f} kg".format(dispo_int))
+
+# Création d'une liste des colonnes à traiter
+colonnes = ['Aliments pour animaux', 'Pertes', 'Nourriture']
+
+
+# Boucle for pour afficher les différentes valeurs en fonction des colonnes aliments pour animaux, pertes, nourritures
+for colonne in colonnes:
+    dispo_int_colonne = dispoAlimentaire[colonne].sum()
+    #print("La disponibilité intérieure mondiale pour la colonne {} est de : {:,.0f} kg".format(colonne, dispo_int_colonne))
+
+
+#************************************************************
+#3.5 - Utilisation des céréales
+#************************************************************
+
+#Création d'une liste avec toutes les variables
+    variables = [
+    'Zone',
+    'Produit',
+    'Origine',
+    'Aliments pour animaux',
+    'Autres Utilisations',
+    'Disponibilité alimentaire (Kcal/personne/jour)',
+    'Disponibilité alimentaire en quantité (kg/personne/an)',
+    'Disponibilité de matière grasse en quantité (g/personne/jour)',
+    'Disponibilité de protéines en quantité (g/personne/jour)',
+    'Disponibilité intérieure',
+    'Exportations - Quantité',
+    'Importations - Quantité',
+    'Nourriture',
+    'Pertes',
+    'Production',
+    'Semences',
+    'Traitement',
+    'Variation de stock']
+
+#Quelle est la proportion d'aliments destinés aux animaux dans la disponibilité intérieure mondiale de produits végétaux ?
+proportion_animale = dispoAlimentaire['Aliments pour animaux'].sum() / dispoAlimentaire['Nourriture'].sum() * 100
+#print("La proportion d'aliments destinés aux animaux dans la disponibilité intérieure mondiale de produits végétaux est de : {:.2f}%".format(proportion_animale))
+
+
+#Création d'un dataframe avec les informations uniquement pour ces céréales
+cereales = dispoAlimentaire[dispoAlimentaire['Produit'].isin(['Blé', 'Riz (Eq Blanchi)', 'Orge', 'Maïs', 'Millet', 'Seigle', 'Avoine', 'Sorgho'])]
+#print(cereales)
+
+#Affichage de la proportion d'alimentation animale
+proportion_animale_cereales = cereales['Aliments pour animaux'].sum() / cereales['Nourriture'].sum() * 100
+#print("La proportion d'aliments destinés aux animaux dans la disponibilité intérieure mondiale de ces céréales est de : {:.2f}%".format(proportion_animale_cereales))
+
+
+#************************************************************
+#3.6 - Pays avec la proportion de personnes sous-alimentées la plus forte en 2017
+#************************************************************
+
+# Créer une colonne 'proportion_sous_nutrition' dans le DataFrame resultats_2017 grouper par pays
+
+# Créer une colonne 'proportion_sous_nutrition' dans le DataFrame resultats_2017
+resultats_2017['proportion_sous_nutrition'] = (resultats_2017['sous_nutrition'] / resultats_2017['Population']) * 100
+#afficher le resultats_2017(head) en %
+
+# afficher les 10 pires pays en terme de sous alimentation
+pays_max_sous_nutrition = resultats_2017.nlargest(10, 'proportion_sous_nutrition')
+#print(pays_max_sous_nutrition)
+
+
+#************************************************************
+#3.7 - Pays qui ont bénéficié d'aide alimentaire depuis 2013
+#************************************************************
+# Dans la table aideAlimentaire, quelles sont les années disponibles
+# Afficher les années disponibles dans la table aideAlimentaire
+#print(aideAlimentaire['Année'].unique())
+
+# Calculer le total des aides alimentaires par pays DEPUIS 2013
+# Créer une colonne 'Total_aide_alimentaire' dans le DataFrame aideAlimentaire
+aideAlimentaire['Total_aide_alimentaire'] = aideAlimentaire.groupby('Zone')['Valeur'].transform('sum')
+#print("Le total des aides alimentaires par pays depuis 2013 est :\n{}".format(aideAlimentaire))
+
+# Affichage après tri des 10 pays qui ont bénéficié le plus de l'aide alimentaire
+pays_max_aide_alimentaire = aideAlimentaire.nlargest(10, 'Total_aide_alimentaire')
+#print(pays_max_aide_alimentaire)
+
+#************************************************************
+#3.8 - Evolution des 5 pays qui ont le plus bénéficié de l'aide alimentaire entre 2013 et 2016
+#************************************************************
+#Création d'un dataframe avec la zone, l'année et l'aide alimentaire puis groupby sur zone et année 
+# Filtrer les données pour les années 2013 à 2016
+aideAlimentaire_2013_2016 = aideAlimentaire[(aideAlimentaire['Année'] >= 2013) & (aideAlimentaire['Année'] <= 2016)]
+
+# Grouper par pays et année, puis calculer le total de l'aide alimentaire
+aideAlimentaire_grouped = aideAlimentaire_2013_2016.groupby(['Zone', 'Année'])['Valeur'].sum().reset_index()
+#print('Aide alimentaire groupée par pays et année : ','\n', aideAlimentaire_grouped)
+
+#Création d'une liste contenant les 5 pays qui ont le plus bénéficiées de l'aide alimentaire
+top_5_pays_par_annee = aideAlimentaire_grouped.groupby('Année').apply(lambda x: x.nlargest(5, 'Valeur')).reset_index(drop=True)
+#print(top_5_pays_par_annee)
+
+#On filtre sur le dataframe avec notre liste
+# Tri des pays par le total de l'aide alimentaire reçue sur la période 2013-2016
+top_pays_aide_alimentaire = aideAlimentaire_grouped.groupby('Zone')['Valeur'].sum().nlargest(5).index
+
+# Filtrer les données pour inclure uniquement les 5 pays sélectionnés
+top_pays_aide_alimentaire_data = aideAlimentaire_grouped[aideAlimentaire_grouped['Zone'].isin(top_pays_aide_alimentaire)]
+
+# Affichage des données
+#print(top_pays_aide_alimentaire_data)
+
+# Affichage des pays avec l'aide alimentaire par année
+# Grouper par année et pays, puis calculer la somme de l'aide alimentaire pour chaque année
+aide_alimentaire_par_annee = aideAlimentaire.groupby(['Zone', 'Année'])['Valeur'].sum().reset_index()
+
+# Afficher les données
+#print(aide_alimentaire_par_annee)
+
+#************************************************************
+#3.9 - Pays avec le moins de disponibilité par habitant
+#************************************************************
+#Affichage des 10 pays qui ont le moins de dispo alimentaire par personne 
+# Calculer la disponibilité alimentaire en kcal par habitant pour chaque produit
+dispo_alim_kcal_par_habitant = dispoAlimentaire.groupby(['Zone', 'Produit'])['Disponibilité alimentaire (Kcal/personne/jour)'].sum().reset_index()
+#print('Disponibilité alimentaire en kcal par habitant pour chaque produit : ','\n', dispo_alim_kcal_par_habitant)
+
+# Afficher les 10 pays avec la disponibilité alimentaire la plus faible par habitant
+pays_min_dispo_alim = dispo_alim_kcal_par_habitant.groupby('Zone')['Disponibilité alimentaire (Kcal/personne/jour)'].sum().nsmallest(10)
+#print('Les 10 pays avec la disponibilité alimentaire la plus faible par habitant : ','\n', pays_min_dispo_alim)
+
+#************************************************************
+#3.10 - Pays avec le plus de disponibilités par habitant
+#************************************************************
+#Affichage des 10 pays qui ont le plus de dispo alimentaire par personne 
+# Calculer la disponibilité alimentaire en kcal par habitant pour chaque produit
+dispo_alim_kcal_par_habitant = dispoAlimentaire.groupby(['Zone', 'Produit'])['Disponibilité alimentaire (Kcal/personne/jour)'].sum().reset_index()
+#print('Disponibilité alimentaire en kcal par habitant pour chaque produit : ','\n', dispo_alim_kcal_par_habitant)
+
+# Afficher les 10 pays avec la disponibilité alimentaire la plus élevée par habitant
+pays_max_dispo_alim = dispo_alim_kcal_par_habitant.groupby('Zone')['Disponibilité alimentaire (Kcal/personne/jour)'].sum().nlargest(10)
+#print('Les 10 pays avec la disponibilité alimentaire la plus élevée par habitant : ','\n', pays_max_dispo_alim)
+
+#************************************************************
+#3.11 - Exemple de la Thaïlande pour le Manioc
+#************************************************************
+
+#création d'un dataframe avec uniquement la Thaïlande 
+# Créer un DataFrame pour la Thaïlande
+thailande = dispoAlimentaire[dispoAlimentaire['Zone'] == 'Thaïlande']
+#print(thailande)
+
+#Calcul de la sous nutrition en Thaïlande
+
+sous_nutrition_thailande = sousNutrition[sousNutrition['Zone'] == 'Thaïlande']
+#print(sous_nutrition_thailande)
+
+## On calcule la proportion exportée en fonction de la proportion
+# disponible intérieurement
+# Créer une colonne 'proportion_exportee' dans le DataFrame thailande
+thailande.loc[:, 'proportion_exportee'] = thailande['Exportations - Quantité'] / thailande['Disponibilité intérieure'] * 100
+#En utilisant .loc[], on garanie qu'on modifie directement le DataFrame thailande et non une vue sur celui-ci
+print(thailande)
+
+#************************************************************
+#6 - Analyses complémentaires
+#************************************************************
+#Rajouter en dessous toutes les analyses complémetaires suite à la demande de mélanie :
+#"et toutes les infos que tu trouverais utiles pour mettre en relief les pays qui semblent être 
+#le plus en difficulté au niveau alimentaire"
 
 
 
