@@ -189,4 +189,91 @@ NourritureDispo_vegetaux['Nb_humains_nourris_vegetaux'] = NourritureDispo_vegeta
 
 #Calculer le nombre total d'humains nourris avec les produits végétaux
 nombre_total_humains_nourris_vegetaux = NourritureDispo_vegetaux['Nb_humains_nourris_vegetaux'].sum()
-print("Le nombre total d'humains pouvant être nourris avec les produits végétaux est d'environ : {:.2f} milliards d'humains".format(nombre_total_humains_nourris_vegetaux / 1e9))
+#print("Le nombre total d'humains pouvant être nourris avec les produits végétaux est d'environ : {:.2f} milliards d'humains".format(nombre_total_humains_nourris_vegetaux / 1e9))
+
+#3_4 Utilisation de la disponibilité intérieure
+
+#Calculer la disponibilité intérieure mondiale en tonnes
+dispo_int = dispoAlimentaire['Disponibilité intérieure'].sum()
+#print("La disponibilité intérieure mondiale est de : {:.2f} kilos".format(dispo_int))
+
+#Afficher les différentes valeurs en fonction des colonnes aliments pour animaux, pertes et nourritures grâce à une boucle
+colonnes = ['Aliments pour animaux', 'Pertes', 'Nourriture']
+for colonne in colonnes:
+    dispo_int_colonne = dispoAlimentaire[colonne].sum()
+    #print("La disponibilité intérieure mondiale en {} est de : {:.2f} kilos".format(colonne, dispo_int_colonne))
+
+#faire un graphique pour visualiser la disponibilité intérieure mondiale
+# Créer un dictionnaire pour stocker les valeurs
+# dispo_int_dict = {'Aliments pour animaux': dispoAlimentaire['Aliments pour animaux'].sum(),
+#                   'Pertes': dispoAlimentaire['Pertes'].sum(),
+#                   'Nourriture': dispoAlimentaire['Nourriture'].sum()}
+# Convertir le dictionnaire en DataFrame
+# dispo_int_df = pd.DataFrame(list(dispo_int_dict.items()), columns=['Produit', 'Disponibilité intérieure'])
+
+# Créer un graphique camenbert  pour visualiser la disponibilité intérieure mondiale (couleur bleu pour nourriture, rouge pour pertes et vert pour aliments pour animaux)
+# dispo_int_df.plot.pie(y='Disponibilité intérieure', labels=dispo_int_df['Produit'], autopct='%1.1f%%', colors=['green', 'red', 'turquoise'], legend=False)
+# plt.pyplot.title('Disponibilité intérieure mondiale')
+# plt.pyplot.axis('equal')  # Pour que le camembert soit un cercle
+# plt.pyplot.show()
+
+
+# Calculer la disponibilité alimentaire de Autres Utilisations en kg
+dispoAutresUtilisations = dispoAlimentaire['Autres Utilisations'].sum()
+#print("La disponibilité alimentaire de Autres Utilisations est de : {:.2f} kilos".format(dispoAutresUtilisations))
+
+#Afficher les différentes valeurs en fonction des colonnes aliments pour animaux, pertes, Autres Utilisations et nourritures grâce à une boucle
+colonnes = ['Aliments pour animaux', 'Pertes', 'Autres Utilisations', 'Nourriture']
+for colonne in colonnes:
+    dispo_int_colonne = dispoAlimentaire[colonne].sum()
+    #print("La disponibilité intérieure mondiale en {} est de : {:.2f} kilos".format(colonne, dispo_int_colonne))
+
+#faire un graphique pour visualiser la disponibilité intérieure mondiale
+# Créer un dictionnaire pour stocker les valeurs
+# dispo_int_dict = {'Aliments pour animaux': dispoAlimentaire['Aliments pour animaux'].sum(),
+#                    'Pertes': dispoAlimentaire['Pertes'].sum(),
+#                    'Nourriture': dispoAlimentaire['Nourriture'].sum(),
+#                    'Autres Utilisations': dispoAlimentaire['Autres Utilisations'].sum()}
+# Convertir le dictionnaire en DataFrame
+# dispo_int_df = pd.DataFrame(list(dispo_int_dict.items()), columns=['Produit', 'Disponibilité intérieure'])
+
+# Créer un graphique camenbert  pour visualiser la disponibilité intérieure mondiale (couleur bleu pour nourriture, rouge pour pertes et vert pour aliments pour animaux)
+# dispo_int_df.plot.pie(y='Disponibilité intérieure', labels=dispo_int_df['Produit'], autopct='%1.1f%%', colors=['green', 'red', 'turquoise', 'grey'], legend=False)
+# plt.pyplot.title('Disponibilité intérieure mondiale')
+# plt.pyplot.axis('equal')  # Pour que le camembert soit un cercle
+# plt.pyplot.show()
+
+#3_5 Utilisation des céréales
+#Création d'une liste avec toutes les variables du fichier DispoAlimentaire
+# Création d'une liste avec toutes les variables du fichier DispoAlimentaire
+variables = ['Autres Utilisations', 
+             'Aliments pour animaux',
+             'Nourriture', 
+             'Pertes', 
+             'Semences', 
+             'Traitement',
+             'Exportations - Quantité',
+             'Importations - Quantité',
+             'Production',
+             'Variation de stock',
+             'Disponibilité intérieure'
+             ]
+
+# Création d'un dataframe qui filtre sur toutes les céréales
+cereales = dispoAlimentaire[dispoAlimentaire['Produit'].isin(['Blé', 'Riz (Eq Blanchi)', 'Orge', 'Maïs', 'Millet', 'Seigle', 'Avoine', 'Sorgho', 'Céréales, Autres'])]
+
+
+# Calculer la proportion totale de 'Aliments pour animaux' par rapport à la disponibilité intérieure totale
+proportion_aliments_animaux = cereales['Aliments pour animaux'].sum() / cereales['Disponibilité intérieure'].sum() * 100
+#print("La proportion totale d'Aliments pour animaux par rapport à la disponibilité intérieure totale est de : {:.2f}%".format(proportion_aliments_animaux))
+
+# Calculer la proportion totale de 'Nourriture' par rapport à la disponibilité intérieure totale
+proportion_nourriture = cereales['Nourriture'].sum() / cereales['Disponibilité intérieure'].sum() * 100
+#print("La proportion totale de Nourriture par rapport à la disponibilité intérieure totale est de : {:.2f}%".format(proportion_nourriture))
+
+# Calculer la proportion totale par variable par rapport à la disponibilité intérieure totale
+proportions = cereales[variables].sum() / cereales['Disponibilité intérieure'].sum() * 100
+#arrondir les valeurs à zero chiffres après la virgule
+proportions = proportions.round(0)
+#print(proportions)
+#print("La différence entre les importation et les exportation + la variation de stock  annule le surplus de production de céréales")
