@@ -1,5 +1,6 @@
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
+
 
 #Importation du fichier population.csv
 population = pd.read_csv('population.csv')
@@ -33,7 +34,7 @@ dispoAlimentaire = dispoAlimentaire.fillna(0)
 #multiplication de toutes les lignes contenant des milliers de tonnes en Kg
 colonnes_a_convertir = ['Autres Utilisations', 'Disponibilité intérieure', 'Exportations - Quantité',
                         'Importations - Quantité', 'Nourriture', 'Pertes', 'Production', 'Semences', 
-                        'Traitement', 'Variation de stock']
+                        'Traitement', 'Variation de stock', 'Aliments pour animaux']
 
 for colonne in colonnes_a_convertir:
     dispoAlimentaire[colonne] *= 1000  # Convertir de milliers de tonnes à kg
@@ -60,6 +61,9 @@ sousNutrition['sous_nutrition'] *= 1000000
 # Conversion en chiffres entiers
 sousNutrition['sous_nutrition'] = sousNutrition['sous_nutrition'].astype(int)
 
+#exporter le fichir sous nutrition au format excel
+#sousNutrition.to_excel('sous_nutrition.xlsx', index=False)
+
 #3_1 PROPORTION DE PERSONNES EN SOUS NUTRITION
 
 # TRAVAIL SUR LA TABLE SOUS NUTRITION
@@ -75,6 +79,11 @@ sousNutrition = sousNutrition.reset_index(drop=True)
 
 # Convertir la colonne 'Année' en type entier (int)
 sousNutrition['Année'] = sousNutrition['Année'].astype(int)
+
+#afficher le tableau pour les années 2015 à 2017
+#print(sousNutrition[(sousNutrition['Année'] >= 2015) & (sousNutrition['Année'] <= 2017)])
+
+#sousNutrition.to_excel('sous_nutrition1.xlsx', index=False)
 
 
 # ************************************************************
@@ -261,10 +270,20 @@ variables = ['Autres Utilisations',
 
 # Création d'un dataframe qui filtre sur toutes les céréales
 cereales = dispoAlimentaire[dispoAlimentaire['Produit'].isin(['Blé', 'Riz (Eq Blanchi)', 'Orge', 'Maïs', 'Millet', 'Seigle', 'Avoine', 'Sorgho', 'Céréales, Autres'])]
+quantite_totale_cereales_animaux = cereales['Aliments pour animaux'].sum()
+#print("La quantité totale de céréales utilisée pour les animaux est de : {:.2f} kilos".format(quantite_totale_cereales_animaux))
+
+quantite_totale_dispo_int = cereales['Disponibilité intérieure'].sum()
+#print("La quantité totale de céréales pour la disponibilité intérieure est de : {:.2f} kilos".format(quantite_totale_dispo_int))
 
 # Calculer la proportion totale de 'Aliments pour animaux' par rapport à la disponibilité intérieure totale
-proportion_aliments_animaux = cereales['Aliments pour animaux'].sum() / cereales['Disponibilité intérieure'].sum() * 100
+proportion_aliments_animaux = quantite_totale_cereales_animaux/ quantite_totale_dispo_int * 100
 #print("La proportion totale d'Aliments pour animaux par rapport à la disponibilité intérieure totale est de : {:.2f}%".format(proportion_aliments_animaux))
+
+#calculer la quantité totale de céréales utilisée pour la nourriture
+quantite_totale_nourriture = cereales['Nourriture'].sum()
+#print("La quantité totale de céréales utilisée pour la nourriture est de : {:.2f} kilos".format(quantite_totale_nourriture))
+
 
 # Calculer la proportion totale de 'Nourriture' par rapport à la disponibilité intérieure totale
 proportion_nourriture = cereales['Nourriture'].sum() / cereales['Disponibilité intérieure'].sum() * 100
@@ -278,115 +297,80 @@ proportions = proportions.round(0)
 
 #3.6 Pays avec la proportion de personnes sous-alimentées la plus élevée en 2017
 
-# Trouver le pays avec la proportion de personnes sous-alimentées la plus élevée en 2017
-#pays_plus_sous_alimentes = resultats_2017[resultats_2017['proportion_sous_nutrition'] == resultats_2017['proportion_sous_nutrition'].max()]
-#print(pays_plus_sous_alimentes)
+#resultats_2017.to_excel('popSousNutJoint.xlsx', index=False)
+#trouver le type de données de chaque colonne du dataFrame resultats_2017
+#print(resultats_2017.dtypes)
 
-# Trier les données par ordre décroissant de proportion de sous-nutrition
-pays_plus_sous_alimentes = resultats_2017.sort_values(by='proportion_sous_nutrition', ascending=False)
+#modifier le type de données proportion_sous_nutrition en float
+resultats_2017['proportion_sous_nutrition'] = resultats_2017['proportion_sous_nutrition'].str.replace('%', '').astype(float)
 
-# Obtenir le pays avec la proportion la plus élevée
-pays_max_sous_alimentes = pays_plus_sous_alimentes.iloc[0]
+# Trier le DataFrame par proportion_sous_nutrition de manière décroissante
+resultats_tries = resultats_2017.sort_values(by='proportion_sous_nutrition', ascending=False)
 
-# Afficher les résultats
-# print("Pays avec la proportion de personnes sous-alimentées la plus élevée en 2017 :")
-# print("Pays :", pays_max_sous_alimentes['Zone'])
-# print("Proportion de sous-nutrition :", pays_max_sous_alimentes['proportion_sous_nutrition'])
+# Afficher les 10 premières lignes du DataFrame trié
+#print(resultats_tries[['Zone', 'proportion_sous_nutrition']].head(10))
 
-# Trier les données par ordre décroissant de proportion de sous-nutrition
-top_10_pays_sous_alimentes = resultats_2017.sort_values(by='proportion_sous_nutrition', ascending=False).head(10)
-
-# Afficher les résultats
-#print("Les 10 pays avec la proportion de personnes sous-alimentées la plus élevée en 2017 :")
-for index, row in top_10_pays_sous_alimentes.iterrows():
-    # print("Pays :", row['Zone'])
-    # print("Proportion de sous-nutrition :", row['proportion_sous_nutrition'])
-    # print("-----------------------------")
+#aideAlimentaire.to_excel('AideAlimentaire.xlsx', index=False)
+#print(aideAlimentaire.dtypes)
+resultats_tries.to_excel('resultats_tries.xlsx', index=False)
 
 #3.7 Pays qui ont le plus bénéficié d'aide alimentaire depuis 2013
+#total_general_aide = aideAlimentaire['Valeur'].sum()
 
-# Somme de l'aide alimentaire par pays depuis 2013
-    aide_total_par_pays = aideAlimentaire.groupby('Zone')['Valeur'].sum().reset_index()
+#print (aideAlimentaire.head())
 
-# Trier les pays par ordre décroissant selon le montant total d'aide alimentaire reçue
-top_10_pays_aide = aide_total_par_pays.sort_values(by='Valeur', ascending=False).head(11)
+#création d'une table pivot pour avoir le montant total de l'aide alimentaire par pays et par année sur une ligne
+pivot_aideAlimentaire = aideAlimentaire.pivot_table(index='Zone', columns='Année', values='Valeur', aggfunc='sum', fill_value=0)
+pivot_aideAlimentaire['Valeur Totale'] = pivot_aideAlimentaire.sum(axis=1)
 
-# Afficher les résultats
-#print("Les 10 pays qui ont reçu le plus d'aide alimentaire depuis 2013 sont :")
-for index, row in top_10_pays_aide.iterrows():
-    # print("Pays :", row['Zone'])
-    # print("Montant total de l'aide alimentaire :", row['Valeur'])
-    # print("-----------------------------")
+pivot_aideAlimentaire.reset_index(inplace=True)
+# print('LA TABLE PIVOT : ')
+# print (pivot_aideAlimentaire.head())
+
+# Tri décroissant par la colonne 'Valeur Totale'
+pivot_aideAlimentaire_sorted = pivot_aideAlimentaire.sort_values(by='Valeur Totale', ascending=False)
+
+#print('TABLE PIVOT TRIÉE PAR VALEUR TOTALE : ')
+#print(pivot_aideAlimentaire_sorted.head())
+
+top_10 = pivot_aideAlimentaire_sorted.head(10)
+#print('Les 10 premiers pays selon la valeur totale de l\'aide alimentaire :')
+#print(top_10)
+
 
 #3.8 Evolution du top 5 des pays les plus aidés entre 2013 et 2016
 
-# Filtrer les données pour les années 2013 à 2016
-    aide_2013_2016 = aideAlimentaire[(aideAlimentaire['Année'] >= 2013) & (aideAlimentaire['Année'] <= 2016)]
+#calcul des 5 pays qui ont reçu le plus d'aide alimentaire entre 2013 et 2016
+top_5 = pivot_aideAlimentaire_sorted.head(5)
+#print('Les 5 premiers pays selon la valeur totale de l\'aide alimentaire :')
+#print(top_5)
 
-# Calculer le total de l'aide alimentaire par pays pour la période de 2013 à 2016
-aide_total_par_pays = aide_2013_2016.groupby('Zone')['Valeur'].sum().reset_index()
+aideAlimentaire['Taux Croissance'] = aideAlimentaire['Valeur'].pct_change() * 100
+#print(aideAlimentaire.head())
 
-# Trier les pays par ordre décroissant selon le montant total d'aide alimentaire reçue
-top_5_pays_aide = aide_total_par_pays.nlargest(5, 'Valeur')
+# Créer une copie explicite si nécessaire pour éviter les avertissements
+top_5_copy = top_5.copy()
 
-# Afficher les résultats
-# print("Les 5 pays qui ont reçu le plus d'aide alimentaire entre 2013 et 2016 sont :")
-# print(top_5_pays_aide[['Zone', 'Valeur']])
+# Calculer le taux de croissance
+top_5_copy['Taux Croissance'] = ((top_5_copy[2016] - top_5_copy[2013]) / top_5_copy[2013]) * 100
 
-import matplotlib.pyplot as plt
+# Arrondir et formater les valeurs en pourcentage
+top_5_copy['Taux Croissance'] = top_5_copy['Taux Croissance'].round(2).astype(str) + '%'
 
-# Liste des 5 pays qui ont reçu le plus d'aide alimentaire entre 2013 et 2016
-top_5_pays = top_5_pays_aide['Zone'].tolist()
-
-# Filtrer les données pour inclure uniquement les 5 pays dans la période de 2013 à 2016
-aide_top_5_pays = aideAlimentaire[(aideAlimentaire['Année'] >= 2013) & (aideAlimentaire['Année'] <= 2016) & (aideAlimentaire['Zone'].isin(top_5_pays))]
-
-# Regrouper les données par année et par pays pour calculer le total de l'aide alimentaire reçue chaque année par ces pays
-aide_total_par_annee_pays = aide_top_5_pays.groupby(['Année', 'Zone'])['Valeur'].sum().unstack()
-
-# Remplacer les NaN par 0 dans l'ensemble du DataFrame aide_total_par_annee_pays
-aide_total_par_annee_pays = aide_total_par_annee_pays.fillna(0)
-# print(aide_total_par_annee_pays)
-
-# Visualisation de l'évolution de l'aide alimentaire pour les 5 pays
-# aide_total_par_annee_pays.plot(kind='line', marker='o')
-# plt.xlabel('Année')
-# plt.ylabel('Aide Alimentaire Reçue')
-# plt.title("Évolution de l'aide alimentaire pour les 5 pays les plus aidés (2013-2016)")
-# plt.legend(title='Pays')
-# plt.grid(True)
-# plt.show()
-
-# Convertir les années en entiers
-aide_total_par_annee_pays.index = aide_total_par_annee_pays.index.astype(int)
-
-# Convertir les années en chaînes de caractères pour éviter les décimales
-aide_total_par_annee_pays.index = aide_total_par_annee_pays.index.astype(str)
-
-# Visualisation de l'évolution de l'aide alimentaire pour les 5 pays
-# aide_total_par_annee_pays.plot(kind='line', marker='o')
-# plt.xlabel('Année')
-# plt.ylabel('Aide Alimentaire Reçue')
-# plt.title("Évolution de l'aide alimentaire en millions pour les 5 pays les plus aidés (2013-2016)")
-# plt.legend(title='Pays')
-# plt.grid(True)
-# plt.show()
+# Maintenant, top_5_copy est prêt à être utilisé sans avertissements
+#print(top_5_copy)
 
 
 #3.9 Liste des pays qui ont la plus faible disponibilité alimentaire par habitant
-
 # Calculer la somme totale de Disponibilité alimentaire en quantité par pays
 dispo_total_par_pays = dispoAlimentaire.groupby('Zone')['Disponibilité alimentaire en quantité (kg/personne/an)'].sum().reset_index()
 
 # Trier les pays par ordre croissant selon leur Disponibilité alimentaire en quantité
 pays_dispo_faible = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire en quantité (kg/personne/an)')
-
-# Afficher les 10 pays ayant la Disponibilité alimentaire en quantité la plus faible
-# print("Les 10 pays ayant la Disponibilité alimentaire en quantité la plus faible sont :")
+# print("Les 10 pays avec la disponibilité alimentaire la plus faible sont :")
 # print(pays_dispo_faible.head(10))
 
 #3.10 Liste des pays qui ont le plus de disponibilité alimentaire par habitant
-
 
 # Trier les pays par ordre décroissant selon la Disponibilité alimentaire en quantité
 pays_dispo_elevee = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire en quantité (kg/personne/an)', ascending=False)
@@ -428,12 +412,13 @@ production_manioc_thailande = manioc_thailande_data['Production'].sum()
 # Calculer la proportion d'exportations par rapport à la production
 proportion_export_production = exportations_manioc_thailande / production_manioc_thailande
 
-print(f"Proportion d'exportations par rapport à la production : {proportion_export_production:.2%}")
+#print(f"Proportion d'exportations par rapport à la production : {proportion_export_production:.2%}")
 
 #Quelle est la disponibilité alimentaire en manioc pour la Thaïlande
 # Filtrer les données pour ne conserver que celles concernant la Thaïlande et le manioc
 dispo_manioc_thailande = dispoAlimentaire[(dispoAlimentaire['Zone'] == 'Thaïlande') & (dispoAlimentaire['Produit'] == 'Manioc')]
 # Calculer la disponibilité par personne de manioc en Thaïlande (kg)
 dispo_totale_manioc_thailande = dispo_manioc_thailande['Disponibilité alimentaire en quantité (kg/personne/an)'].sum()
-print(f"La disponibilité alimentaire en manioc (kg/personne/an) en Thaïlande est de : {dispo_totale_manioc_thailande:.2f} kg")
+#print(f"La disponibilité alimentaire en manioc (kg/personne/an) en Thaïlande est de : {dispo_totale_manioc_thailande:.2f} kg")
 
+# 
