@@ -5,14 +5,18 @@ import matplotlib.pyplot as plt
 #Importation du fichier population.csv
 population = pd.read_csv('population.csv')
 
+
 #Importation du fichier dispo_alimentaire.csv
 dispoAlimentaire = pd.read_csv('dispo_alimentaire.csv')
+
 
 #Importation du fichier aide_alimentaire.csv
 aideAlimentaire = pd.read_csv('aide_alimentaire.csv')
 
+
 #Importation du fichier sous_nutrition.csv
 sousNutrition = pd.read_csv('sous_nutrition.csv')
+
 
 #Nous allons harmoniser les unités. Pour cela, nous avons décidé de multiplier la population par 1000
 
@@ -68,7 +72,6 @@ sousNutrition['sous_nutrition'] = sousNutrition['sous_nutrition'].astype(int)
 
 # TRAVAIL SUR LA TABLE SOUS NUTRITION
 
-
 # Déploiement du groupe d'année sur une ligne ['2012-2014'] => ['2012', '2013', '2014']
 sousNutrition['Année'] = sousNutrition['Année'].str.split('-').apply(lambda x: list(range(int(x[0]), int(x[1])+1)))
 sousNutrition = sousNutrition.explode('Année')
@@ -88,7 +91,6 @@ sousNutrition['Année'] = sousNutrition['Année'].astype(int)
 
 # ************************************************************
 
-
 # Jointure entre les tables population et sousNutrition sur les colonnes 'Zone' et 'Année'
 jointure = pd.merge(population, sousNutrition, on=['Zone', 'Année'])
 
@@ -103,6 +105,33 @@ resultats_2017 = resultats_2017.groupby('Zone').agg({'Population': 'first', 'sou
 
 # Convertir la colonne 'sous_nutrition' en type entier
 resultats_2017['sous_nutrition'] = resultats_2017['sous_nutrition'].astype(int)
+
+#********************************************************************************************************************
+# FOCUS SUR MANQUE DE DONNEES DE SOUS-NUTRITION
+#********************************************************************************************************************
+# Afficher la somme de Population dont sous_nutrition = 0
+# print('Nombre de personnes dont nous n"avons pas de données de sous-nutrition :')
+# print(resultats_2017[resultats_2017['sous_nutrition'] == 0]['Population'].sum())
+
+# Nombre de personnes total du fichier
+# print('Nombre total de personnes :')
+# print(resultats_2017['Population'].sum())
+
+# Calculer la proportion de la population ayant une sous-nutrition égale à zéro
+proportion_sous_nutrition_0 = (resultats_2017[resultats_2017['sous_nutrition'] == 0]['Population'].sum() / resultats_2017['Population'].sum()) * 100
+#print("Proportion de la population sans données de sous-nutrition: {:.2f}%".format(proportion_sous_nutrition_0))
+
+# liste des pays sans données de sous-nutrition
+# print('Pays sans données de sous-nutrition :')
+# print(resultats_2017[resultats_2017['sous_nutrition'] == 0]['Zone'])
+
+# les 118 pays sans données ou valeur nulle de sous nutrition sont des pays riches ou des pays en guerre
+# Ils me semblent important de les conserver pour ne pas fausser les résultats
+# les exclures revient à exclure presque la moitié de la population mondiale, sachant que dans cette liste
+# il y a un bon nombre qui ne sont pas en sous-nutrition
+
+#********************************************************************************************************************
+
 
 # Calculer la proportion de sous-nutrition
 resultats_2017['proportion_sous_nutrition'] = resultats_2017['sous_nutrition'] / resultats_2017['Population']*100
@@ -345,39 +374,30 @@ top_5 = pivot_aideAlimentaire_sorted.head(5)
 #print('Les 5 premiers pays selon la valeur totale de l\'aide alimentaire :')
 #print(top_5)
 
-aideAlimentaire['Taux Croissance'] = aideAlimentaire['Valeur'].pct_change() * 100
-#print(aideAlimentaire.head())
-
-# Créer une copie explicite si nécessaire pour éviter les avertissements
-top_5_copy = top_5.copy()
-
-# Calculer le taux de croissance
-top_5_copy['Taux Croissance'] = ((top_5_copy[2016] - top_5_copy[2013]) / top_5_copy[2013]) * 100
-
-# Arrondir et formater les valeurs en pourcentage
-top_5_copy['Taux Croissance'] = top_5_copy['Taux Croissance'].round(2).astype(str) + '%'
-
-# Maintenant, top_5_copy est prêt à être utilisé sans avertissements
-#print(top_5_copy)
+# aideAlimentaire['Taux Croissance'] = aideAlimentaire['Valeur'].pct_change() * 100
+# #print(aideAlimentaire.head())
 
 
 #3.9 Liste des pays qui ont la plus faible disponibilité alimentaire par habitant
 # Calculer la somme totale de Disponibilité alimentaire en quantité par pays
-dispo_total_par_pays = dispoAlimentaire.groupby('Zone')['Disponibilité alimentaire en quantité (kg/personne/an)'].sum().reset_index()
+dispo_total_par_pays = dispoAlimentaire.groupby('Zone')['Disponibilité alimentaire (Kcal/personne/jour)'].sum().reset_index()
 
 # Trier les pays par ordre croissant selon leur Disponibilité alimentaire en quantité
-pays_dispo_faible = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire en quantité (kg/personne/an)')
-# print("Les 10 pays avec la disponibilité alimentaire la plus faible sont :")
-# print(pays_dispo_faible.head(10))
+pays_dispo_faible = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire (Kcal/personne/jour)')
+print("Les 10 pays avec la disponibilité alimentaire la plus faible sont :")
+print(pays_dispo_faible.head(10))
+print('la somme totale de la disponibilité alimentaire en kcal/personne/jour est de : ', dispo_total_par_pays['Disponibilité alimentaire (Kcal/personne/jour)'].sum())
+
 
 #3.10 Liste des pays qui ont le plus de disponibilité alimentaire par habitant
 
 # Trier les pays par ordre décroissant selon la Disponibilité alimentaire en quantité
-pays_dispo_elevee = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire en quantité (kg/personne/an)', ascending=False)
+pays_dispo_elevee = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire (Kcal/personne/jour)', ascending=False)
 
 # Afficher les 10 premiers pays ayant la Disponibilité alimentaire en quantité la plus haute
-# print("Les 10 pays ayant la Disponibilité alimentaire en quantité la plus haute sont :")
-# print(pays_dispo_elevee.head(10))
+print("Les 10 pays ayant la Disponibilité alimentaire en quantité la plus haute sont :")
+print(pays_dispo_elevee.head(10))
+
 
 #3.11 Etude sur la Thaïlande
 
@@ -421,4 +441,3 @@ dispo_manioc_thailande = dispoAlimentaire[(dispoAlimentaire['Zone'] == 'Thaïlan
 dispo_totale_manioc_thailande = dispo_manioc_thailande['Disponibilité alimentaire en quantité (kg/personne/an)'].sum()
 #print(f"La disponibilité alimentaire en manioc (kg/personne/an) en Thaïlande est de : {dispo_totale_manioc_thailande:.2f} kg")
 
-# 
