@@ -441,3 +441,4 @@ dispo_manioc_thailande = dispoAlimentaire[(dispoAlimentaire['Zone'] == 'Thaïlan
 dispo_totale_manioc_thailande = dispo_manioc_thailande['Disponibilité alimentaire en quantité (kg/personne/an)'].sum()
 #print(f"La disponibilité alimentaire en manioc (kg/personne/an) en Thaïlande est de : {dispo_totale_manioc_thailande:.2f} kg")
 
+#CONCLUSION
