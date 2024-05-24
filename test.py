@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
+'''pd.read_csv(filename) charge les données à partir du fichier CSV spécifié
+ et les retourne sous forme de DataFrame.'''
 
 #Importation du fichier population.csv
 population = pd.read_csv('population.csv')
@@ -19,7 +21,6 @@ sousNutrition = pd.read_csv('sous_nutrition.csv')
 
 
 #Nous allons harmoniser les unités. Pour cela, nous avons décidé de multiplier la population par 1000
-
 
 # Multiplication de la colonne "Valeur" par 1000
 population['Population'] = population['Valeur'] * 1000
@@ -68,30 +69,33 @@ sousNutrition['sous_nutrition'] = sousNutrition['sous_nutrition'].astype(int)
 #exporter le fichir sous nutrition au format excel
 #sousNutrition.to_excel('sous_nutrition.xlsx', index=False)
 
-#3_1 PROPORTION DE PERSONNES EN SOUS NUTRITION
+#3-1 PROPORTION DE PERSONNES SOUS-NUTRIES DANS LE MONDE EN 2017
 
 # TRAVAIL SUR LA TABLE SOUS NUTRITION
 
-# Déploiement du groupe d'année sur une ligne ['2012-2014'] => ['2012', '2013', '2014']
-sousNutrition['Année'] = sousNutrition['Année'].str.split('-').apply(lambda x: list(range(int(x[0]), int(x[1])+1)))
+# Définition de la fonction create_year_list (créer une liste d'années)
+def create_year_list(year_range):
+    start_year, end_year = map(int, year_range.split('-'))
+    return list(range(start_year, end_year + 1))
+
+# Utilisation de la fonction pour spliter les groupes d'années
+sousNutrition['Année'] = sousNutrition['Année'].apply(create_year_list)
+
+# Déplier la liste d'années pour chaque ligne (une ligne par année)
 sousNutrition = sousNutrition.explode('Année')
-sousNutrition['Année'] = sousNutrition['Année'].astype(int)
 
 # Réinitialiser les index /garantit que chaque ligne a un index unique et que les index sont contigus, ce qui facilite l'accès et la manipulation des données.
 sousNutrition = sousNutrition.reset_index(drop=True)
 
-# Convertir la colonne 'Année' en type entier (int)
-sousNutrition['Année'] = sousNutrition['Année'].astype(int)
-
-#afficher le tableau pour les années 2015 à 2017
-#print(sousNutrition[(sousNutrition['Année'] >= 2015) & (sousNutrition['Année'] <= 2017)])
-
-#sousNutrition.to_excel('sous_nutrition1.xlsx', index=False)
-
 
 # ************************************************************
 
+
 # Jointure entre les tables population et sousNutrition sur les colonnes 'Zone' et 'Année'
+#jointure = pd.merge(population, sousNutrition, on=['Zone', 'Année'])
+'''Inner join par défaut car on veut les données qui sont dans les deux tables
+fichier population contient plus de pays que fichier sous-nutrition et retourne des Nan dans le résultat
+donc on ne peut pas convertir en entier la colonne sous_nutrition'''
 jointure = pd.merge(population, sousNutrition, on=['Zone', 'Année'])
 
 # Filtrer les résultats pour ne conserver que les lignes avec l'année 2017
@@ -105,6 +109,7 @@ resultats_2017 = resultats_2017.groupby('Zone').agg({'Population': 'first', 'sou
 
 # Convertir la colonne 'sous_nutrition' en type entier
 resultats_2017['sous_nutrition'] = resultats_2017['sous_nutrition'].astype(int)
+
 
 #********************************************************************************************************************
 # FOCUS SUR MANQUE DE DONNEES DE SOUS-NUTRITION
@@ -163,12 +168,22 @@ pourcentage_sous_nutrition_arrondi = round(pourcentage_sous_nutrition, 2)
 
 #Combien mange en moyenne un être humain ? Source => dispoAlimentaire
 # Calculer la disponibilité alimentaire moyenne par personne par produit en 2017
+'''df[column_name].mean() calcule la moyenne des valeurs de la colonne column_name.'''
 
 disponibilite_moyenne_par_personne = dispoAlimentaire[['Produit', 'Disponibilité alimentaire en quantité (kg/personne/an)']].groupby('Produit').mean()
 #print(disponibilite_moyenne_par_personne)
 
 #Filtrer la table population sur l'année 2017 
+'''df[df[column_name] == value] retourne un sous-ensemble du DataFrame df où les valeurs de la colonne column_name sont égales à value.'''
 population_2017 = population[population['Année'] == 2017]
+
+#Nombre de ligne de la colonne Zone dans le DataFrame population_2017
+#compter le nombre de Zone dans le DataFrame population_2017
+nombre_pays = population_2017['Zone'].nunique()
+#print("Le nombre de pays dans le DataFrame population_2017 est de : {}".format(nombre_pays))
+#compter le nombre de pays dans dispoAlimentaire
+nombre_pays_dispoAlimentaire = dispoAlimentaire['Zone'].nunique()
+#print("Le nombre de pays dans le DataFrame dispoAlimentaire est de : {}".format(nombre_pays_dispoAlimentaire))
 
 #Faire une jointure entre les tables disponibilité alimentaire et population sur la colonne Zone
 dispoAlimentaire = pd.merge(dispoAlimentaire, population_2017, on='Zone')
@@ -178,7 +193,7 @@ Nbre_cal_journaliere_par_personne_disponibles = dispoAlimentaire.groupby('Zone')
 Nbre_cal_journaliere_par_personne_disponibles.rename(columns={'Disponibilité alimentaire (Kcal/personne/jour)': 'Nbre_cal_journaliere_par_personne_disponibles'}, inplace=True)
 
 # Fusionner les DataFrames sur la colonne 'Zone'
-dispoAlimentaire = pd.merge(dispoAlimentaire, Nbre_cal_journaliere_par_personne_disponibles, on='Zone')
+dispoAlimentaire = pd.merge(dispoAlimentaire, Nbre_cal_journaliere_par_personne_disponibles, on='Zone', how='outer')
 
 # Grouper par pays et obtenir la première ligne de chaque groupe
 NourritureDispo = dispoAlimentaire.groupby('Zone').first().reset_index()[['Zone', 'Population', 'Nbre_cal_journaliere_par_personne_disponibles']]
@@ -213,7 +228,8 @@ Nbre_cal_vege_journaliere_par_personne_disponibles = dispoAlimentaire_vegetaux.g
 Nbre_cal_vege_journaliere_par_personne_disponibles.rename(columns={'Disponibilité alimentaire (Kcal/personne/jour)': 'Nbre_cal_vege_journaliere_par_personne_disponibles'}, inplace=True)
 
 #Ajouter cette colonne au DataFrame dispoAlimentaire_vegetaux
-dispoAlimentaire_vegetaux = pd.merge(dispoAlimentaire_vegetaux, Nbre_cal_vege_journaliere_par_personne_disponibles, on='Zone')
+dispoAlimentaire_vegetaux = pd.merge(dispoAlimentaire_vegetaux, Nbre_cal_vege_journaliere_par_personne_disponibles, on='Zone', how='outer')
+
 
 #Grouper par pays et obtenir la première ligne de chaque groupe
 NourritureDispo_vegetaux = dispoAlimentaire_vegetaux.groupby('Zone').first().reset_index()[['Zone', 'Population', 'Nbre_cal_vege_journaliere_par_personne_disponibles']]
@@ -298,6 +314,7 @@ variables = ['Autres Utilisations',
              ]
 
 # Création d'un dataframe qui filtre sur toutes les céréales
+'''df[df[column_name] == value] retourne un sous-ensemble du DataFrame df où les valeurs de la colonne column_name sont égales à value.'''
 cereales = dispoAlimentaire[dispoAlimentaire['Produit'].isin(['Blé', 'Riz (Eq Blanchi)', 'Orge', 'Maïs', 'Millet', 'Seigle', 'Avoine', 'Sorgho', 'Céréales, Autres'])]
 quantite_totale_cereales_animaux = cereales['Aliments pour animaux'].sum()
 #print("La quantité totale de céréales utilisée pour les animaux est de : {:.2f} kilos".format(quantite_totale_cereales_animaux))
@@ -344,27 +361,19 @@ resultats_tries = resultats_2017.sort_values(by='proportion_sous_nutrition', asc
 resultats_tries.to_excel('resultats_tries.xlsx', index=False)
 
 #3.7 Pays qui ont le plus bénéficié d'aide alimentaire depuis 2013
-#total_general_aide = aideAlimentaire['Valeur'].sum()
-
-#print (aideAlimentaire.head())
-
 #création d'une table pivot pour avoir le montant total de l'aide alimentaire par pays et par année sur une ligne
 pivot_aideAlimentaire = aideAlimentaire.pivot_table(index='Zone', columns='Année', values='Valeur', aggfunc='sum', fill_value=0)
 pivot_aideAlimentaire['Valeur Totale'] = pivot_aideAlimentaire.sum(axis=1)
 
 pivot_aideAlimentaire.reset_index(inplace=True)
-# print('LA TABLE PIVOT : ')
-# print (pivot_aideAlimentaire.head())
+#print('LA TABLE PIVOT : ')
+#print (pivot_aideAlimentaire.head())
 
 # Tri décroissant par la colonne 'Valeur Totale'
 pivot_aideAlimentaire_sorted = pivot_aideAlimentaire.sort_values(by='Valeur Totale', ascending=False)
-
-#print('TABLE PIVOT TRIÉE PAR VALEUR TOTALE : ')
-#print(pivot_aideAlimentaire_sorted.head())
-
 top_10 = pivot_aideAlimentaire_sorted.head(10)
-#print('Les 10 premiers pays selon la valeur totale de l\'aide alimentaire :')
-#print(top_10)
+print('Les 10 premiers pays selon la valeur totale de l\'aide alimentaire :')
+print(top_10)
 
 
 #3.8 Evolution du top 5 des pays les plus aidés entre 2013 et 2016
@@ -384,9 +393,9 @@ dispo_total_par_pays = dispoAlimentaire.groupby('Zone')['Disponibilité alimenta
 
 # Trier les pays par ordre croissant selon leur Disponibilité alimentaire en quantité
 pays_dispo_faible = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire (Kcal/personne/jour)')
-print("Les 10 pays avec la disponibilité alimentaire la plus faible sont :")
-print(pays_dispo_faible.head(10))
-print('la somme totale de la disponibilité alimentaire en kcal/personne/jour est de : ', dispo_total_par_pays['Disponibilité alimentaire (Kcal/personne/jour)'].sum())
+#print("Les 10 pays avec la disponibilité alimentaire la plus faible sont :")
+#print(pays_dispo_faible.head(10))
+#print('la somme totale de la disponibilité alimentaire en kcal/personne/jour est de : ', dispo_total_par_pays['Disponibilité alimentaire (Kcal/personne/jour)'].sum())
 
 
 #3.10 Liste des pays qui ont le plus de disponibilité alimentaire par habitant
@@ -395,14 +404,15 @@ print('la somme totale de la disponibilité alimentaire en kcal/personne/jour es
 pays_dispo_elevee = dispo_total_par_pays.sort_values(by='Disponibilité alimentaire (Kcal/personne/jour)', ascending=False)
 
 # Afficher les 10 premiers pays ayant la Disponibilité alimentaire en quantité la plus haute
-print("Les 10 pays ayant la Disponibilité alimentaire en quantité la plus haute sont :")
-print(pays_dispo_elevee.head(10))
+#print("Les 10 pays ayant la Disponibilité alimentaire en quantité la plus haute sont :")
+#print(pays_dispo_elevee.head(10))
 
 
 #3.11 Etude sur la Thaïlande
 
 #création d'un dataframe avec uniquement la Thaïlande 
 # Filtrer les résultats pour ne conserver que les lignes avec l'année 2017 et la Thaïlande
+'''df[df[column_name] == value] retourne un sous-ensemble du DataFrame df où les valeurs de la colonne column_name sont égales à value.'''
 resultats_thailande_2017 = resultats_2017[resultats_2017['Zone'] == 'Thaïlande']
 
 
@@ -420,6 +430,7 @@ pourcentage_sous_nutrition_thailande = (sous_nutrition_thailande_2017 / populati
 
 # Calculer la quanité de Manioc Thaïlandais qui est exporté
 # Filtrer les données pour ne conserver que celles concernant le Manioc en Thaïlande
+'''df[df[column_name] == value] retourne un sous-ensemble du DataFrame df où les valeurs de la colonne column_name sont égales à value.'''
 manioc_thailande_data = dispoAlimentaire[(dispoAlimentaire['Zone'] == 'Thaïlande') & (dispoAlimentaire['Produit'] == 'Manioc')]
 
 # Calculer la quantité de Manioc Thaïlandais exporté
@@ -436,6 +447,7 @@ proportion_export_production = exportations_manioc_thailande / production_manioc
 
 #Quelle est la disponibilité alimentaire en manioc pour la Thaïlande
 # Filtrer les données pour ne conserver que celles concernant la Thaïlande et le manioc
+'''df[df[column_name] == value] retourne un sous-ensemble du DataFrame df où les valeurs de la colonne column_name sont égales à value.'''
 dispo_manioc_thailande = dispoAlimentaire[(dispoAlimentaire['Zone'] == 'Thaïlande') & (dispoAlimentaire['Produit'] == 'Manioc')]
 # Calculer la disponibilité par personne de manioc en Thaïlande (kg)
 dispo_totale_manioc_thailande = dispo_manioc_thailande['Disponibilité alimentaire en quantité (kg/personne/an)'].sum()
