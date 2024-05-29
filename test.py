@@ -372,8 +372,8 @@ pivot_aideAlimentaire.reset_index(inplace=True)
 # Tri décroissant par la colonne 'Valeur Totale'
 pivot_aideAlimentaire_sorted = pivot_aideAlimentaire.sort_values(by='Valeur Totale', ascending=False)
 top_10 = pivot_aideAlimentaire_sorted.head(10)
-print('Les 10 premiers pays selon la valeur totale de l\'aide alimentaire :')
-print(top_10)
+#print('Les 10 premiers pays selon la valeur totale de l\'aide alimentaire :')
+#print(top_10)
 
 
 #3.8 Evolution du top 5 des pays les plus aidés entre 2013 et 2016
