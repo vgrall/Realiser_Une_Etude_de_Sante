@@ -12,6 +12,7 @@ population = pd.read_csv('population.csv')
 dispoAlimentaire = pd.read_csv('dispo_alimentaire.csv')
 
 
+
 #Importation du fichier aide_alimentaire.csv
 aideAlimentaire = pd.read_csv('aide_alimentaire.csv')
 
